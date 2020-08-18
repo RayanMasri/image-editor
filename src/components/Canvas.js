@@ -3,30 +3,20 @@ import {useDropzone} from 'react-dropzone';
 
 const fontsUrl = "https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyAeG8DyUge1HQLUH9MJqifW18gMzOkqErs";
 
-function httpGetAsync(theUrl, callback)
-{
-    var xmlHttp = new XMLHttpRequest();
-    xmlHttp.onreadystatechange = function() { 
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
-            callback(xmlHttp.responseText);
-    }
-    xmlHttp.open("GET", theUrl, true); // true for asynchronous 
-    xmlHttp.send(null);
-}
-
 function isObjEmpty(obj) {
     return obj ? Object.keys(obj).length === 0 && obj.constructor === Object : true
 }
 
 function Canvas(props) {
-    let currentFont = "";
-
     // References
     const canvas = React.useRef(null);
     const downloadButton = React.useRef(null);
     const uploadButton = React.useRef(null);
-    const fontInput = React.useRef(null);
     // add index property
+    // add text placeholder
+    // add shapes
+
+    let frameCount = 0;
     let textSpacing = 30;
     let selectedSpacing = 5;
 
@@ -35,20 +25,13 @@ function Canvas(props) {
     let mouseX = undefined;
     let mouseY = undefined;
 
+    // Canvas Elements
+
     let backgroundImage = {}
 
-    // Canvas Elements
     let textElements = [];
     // Text Element Layout
     // { text, font, x, y, selected }
-
-    const findFont = () => {
-        let font = fontInput.current.value
-        httpGetAsync(fontsUrl, function(result) {
-            result = JSON.parse(result);
-            console.log(result);
-        });
-    }
 
     const deleteCanvas = () => {
         window.location.reload(false); 
@@ -82,7 +65,7 @@ function Canvas(props) {
             text: "",
             font: "30px Arial",
             x: canvas.current.width / 2,
-            y: canvas.current.height / 2,
+            y: isObjEmpty(backgroundImage) ? canvas.current.height / 2 : canvas.current.height / 2 - backgroundImage.height / 2,
             selected: true
         })
         updateTextElements();
@@ -121,10 +104,6 @@ function Canvas(props) {
 
     
     const drawTextElement = function(e) {
-        if(!e.selected && !e.text)  {            
-            return;
-        }
-
         let ctx = getContext();  
         let lines = getTextLines(e.text, canvas.current);
 
@@ -132,13 +111,15 @@ function Canvas(props) {
         
         for(let i in lines) {
             let line = lines[i];
+            ctx.fillStyle = "black"
             ctx.fillText(line, e.x, e.y + getCharHeight() * i);
         }
-
+        
         let [txtWidth, txtHeight] = getTextSize(e.text);
         if(e.selected) {
             ctx.strokeRect(e.x-selectedSpacing/2, e.y-getCharHeight(), (txtWidth > 0 ? txtWidth : 1) + selectedSpacing, (txtHeight > 0 ? txtHeight : getCharHeight()) + selectedSpacing);
         }
+
     }
 
     const updateTextElements = function() { 
@@ -147,6 +128,8 @@ function Canvas(props) {
             drawTextElement(e);
         })
         drawBackgroundImage();
+        // console.log(`frame: ${frameCount}`);
+        frameCount++;
     }
 
     const selectTextElement = function(index) {
@@ -242,7 +225,6 @@ function Canvas(props) {
     }
 
     const dblclick = function(e) {
-        console.log("double click");
     }
 
     const keydown = function(event) {
@@ -271,6 +253,9 @@ function Canvas(props) {
         document.body.addEventListener('mousemove', mousemove, true);
         document.body.addEventListener('keydown', keydown, true);
         document.body.addEventListener('dblclick', dblclick, true);
+        document.getElementById("add-text").addEventListener('mouseup', function() {
+            addText();
+        }, true);
     }, [])
 
     const onDrop = React.useCallback((files) => {        
@@ -281,6 +266,8 @@ function Canvas(props) {
         img.onload = function() {
             backgroundImage = {
                 image: img,
+                width: this.width,
+                height: this.height,
                 x: canvas.current.width / 2 - this.width / 2,
                 y: canvas.current.height / 2 - this.height / 2
             }
@@ -296,8 +283,6 @@ function Canvas(props) {
             display: "flex",
             flexDirection: "row"
         }}>  
-            {/* <link rel="stylesheet" type="text/css" href={currentFont}/> */}
-            {/* <span id="loader" style={{}}></span> */}
             <canvas style={{
                 backgroundColor: "lightgray"
             }} width="512" height="512" ref={canvas}/>
@@ -350,20 +335,18 @@ function Canvas(props) {
                         paddingTop: "10px"
                     }} src={require("../assets/upload-icon.png")}></img>  
                 </div> 
-                <button style={{
+                <button id='add-text' style={{
                     width: "50px",
                     height: "50px",
                     backgroundColor: "gray",
                     border: "none",
-                }} onClick={addText}>
+                }}>
                     <img style={{
                         width: "30px",
                         height: "30px"
                     }} src={require("../assets/text-icon.png")}></img>   
                 </button> 
             </div>
-            {/* <input type="text" ref={fontInput}/> */}
-            {/* <button onClick={findFont}>Find font</button> */}
         </div>
     )
 }
