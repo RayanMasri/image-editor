@@ -10,9 +10,13 @@ function Canvas(props) {
     const canvas = React.useRef(null);
     const downloadButton = React.useRef(null);
     const uploadButton = React.useRef(null);
+    // const fontInput = React.useRef(null);
     // add index property
+    let textSpacing = 30;
+    let selectedSpacing = 5;
 
     let dragging = [undefined, undefined];
+    let dragDistance = undefined;
     let mouseX = undefined;
     let mouseY = undefined;
 
@@ -47,10 +51,6 @@ function Canvas(props) {
         return [event.layerX, event.layerY]
     }
 
-    const getTextSize = function(text) {
-        let ctx = getContext();
-        return [ctx.measureText(text).width, ctx.measureText("M").width]
-    }
 
     const addInput = function(object) {
         textElements.map((e) => {
@@ -65,36 +65,57 @@ function Canvas(props) {
         })
         updateTextElements();
     }
+
+    const getCharHeight = () => {
+        let ctx = getContext();
+        return ctx.measureText("M").width;
+    }
+
+    const getTextLines = function(text, canvas) {
+        let ctx = canvas.getContext('2d');
+        let lines = []        
+        let currentLine = 0;
+        
+        for(let i = 0; i < text.length; i++) {
+            let char = text[i];
+
+            if(lines[currentLine]) {
+                if(ctx.measureText(lines[currentLine]).width >= canvas.width - textSpacing) {                
+                    currentLine++;                
+                }
+            }
+
+            lines[currentLine] = lines[currentLine] ? lines[currentLine] + char : char;
+        }
+
+        return lines
+    }
+
+    const getTextSize = function(text) {
+        let ctx = getContext();
+        let lines = getTextLines(text, canvas.current)
+        return [Math.min(canvas.current.width - textSpacing, ctx.measureText(text).width), getCharHeight() * lines.length];
+    }
+
     
     const drawTextElement = function(e) {
         if(!e.selected && !e.text)  {            
             return;
         }
 
-        let ctx = getContext();
-        ctx.font = e.font;                
-        // let lines = []        
-        // let lineWidth = 0;
-        // let currentLine = "";
-        // for(let i = 0; i < e.text.length; i++) {
-        //     let char = e.text[i];
-        //     let width = ctx.measureText(char).width
+        let ctx = getContext();  
+        let lines = getTextLines(e.text, canvas.current);
 
-        //     if(lineWidth >= canvas.current.width) {
-        //         lines.push(currentLine);
-        //         currentLine = "";
-        //         lineWidth = 0;
-        //     }
+        ctx.font = e.font; 
+        
+        for(let i in lines) {
+            let line = lines[i];
+            ctx.fillText(line, e.x, e.y + getCharHeight() * i);
+        }
 
-        //     lineWidth += width;            
-        //     currentLine += char;
-        // }
-        // console.log(lines);
-        ctx.fillText(e.text, e.x, e.y);
         let [txtWidth, txtHeight] = getTextSize(e.text);
         if(e.selected) {
-            // ctx.strokeRect(e.x, e.y-txtHeight, Math.min(canvas.current.width - 5, txtWidth), txtHeight*lines.length);
-            ctx.strokeRect(e.x, e.y-txtHeight, txtWidth, txtHeight);
+            ctx.strokeRect(e.x-selectedSpacing/2, e.y-getCharHeight(), (txtWidth > 0 ? txtWidth : 1) + selectedSpacing, (txtHeight > 0 ? txtHeight : getCharHeight()) + selectedSpacing);
         }
     }
 
@@ -118,11 +139,11 @@ function Canvas(props) {
         let [mouseX, mouseY] = getMouseFromEvent(e);
         for(let i = 0; i < textElements.length; i++) {
             let textElement = textElements[i];
+            let [width, height] = getTextSize(textElement.text)
             let dist = {
                 x: textElement.x - mouseX,
-                y: textElement.y - mouseY,
+                y: textElement.y + (height - getCharHeight()) - mouseY,
             }
-            let [width, height] = getTextSize(textElement.text)
             if(dist.y >= 0 && dist.y <= height) {
                 if(dist.x <= 0 && dist.x >= -width) {
                     if(textElement.selected || textElement.text) {
@@ -164,15 +185,11 @@ function Canvas(props) {
             textElements.map((e) => {e.selected = false});
 
             let [width, height] = getTextSize(drag);
-            textElements[dragIndex].x = mouseX - width / 2;
-            textElements[dragIndex].y = mouseY - height / 2;
+            textElements[dragIndex].x = mouseX - dragDistance.x;
+            textElements[dragIndex].y = mouseY - dragDistance.y;
 
             updateTextElements();       
         }
-
-        console.log(hovered ? hovered.text : undefined);
-
-
     }
 
     const mousedown = function(e) {
@@ -180,6 +197,10 @@ function Canvas(props) {
 
         if(hovered) {
             dragging = [hovered, index];
+            dragDistance = {
+                x: mouseX - hovered.x,
+                y: mouseY - hovered.y
+            }
         }
     }
     
@@ -195,6 +216,7 @@ function Canvas(props) {
             selectTextElement(index);        
         }
         dragging = [undefined, undefined];
+        dragDistance = undefined
     }
 
     const dblclick = function(e) {
@@ -350,7 +372,8 @@ function Canvas(props) {
                     }} src={require("../assets/upload-icon.png")}></img>  
                 </div> 
             </div>
-            
+            {/* <input type="text" ref={fontInput}/> */}
+            {/* <button onClick={findFont}>Find font</button> */}
         </div>
     )
 }
