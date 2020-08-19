@@ -68,8 +68,16 @@ class Text {
 
     getSize() {
         let lines = this.lines();
-        console.log(lines);
         return [Math.min(this.screenWidth - 30, this.ctx.measureText(this.text).width), this.getCharHeight() * lines.length];
+    }
+
+    isHovered(mouseX, mouseY) {
+        let [width, height] = this.getSize();
+        let dist = {
+            x: this.x - mouseX,
+            y: this.y + (height - this.getCharHeight()) - mouseY,
+        }
+        return (dist.y >= 0 && dist.y <= height) && (dist.x <= 0 && dist.x >= -width);
     }
 
     render() {
@@ -83,14 +91,12 @@ class Text {
         
         if(this.selected) {
             let [width, height] = this.getSize();
-            console.log([width, height]);
             this.ctx.strokeRect(
                 this.x-2.5,
                 this.y-this.getCharHeight(),
                 (width > 0 ? width : 1) + 5,
                 (height > 0 ? height : this.getCharHeight()) + 5);
         }
-        // this.ctx.fillText(this.text, this.x, this.y);
     }
 }
 
@@ -178,25 +184,14 @@ function Canvas(props) {
 
     const getHoveredText = function() {
         for(let text of texts) {            
-            console.log(text);
-            let [width, height] = text.getSize();
-            let dist = {
-                x: text.x - mouseX,
-                y: text.y + (height - text.getCharHeight()) - mouseY,
-            }
-            if(dist.y >= 0 && dist.y <= height) {
-                if(dist.x <= 0 && dist.x >= -width) {
-                    if(text.selected || text.text) {
-                        return text
-                    }
-                }
+            if(text.isHovered(mouseX, mouseY)) {
+                return text;
             }
         }
     }
 
     const getSelectedText = function() {
         for(let text of texts) {
-            console.log(text.selected);
             if(text.selected) {
                 return text;
             }
@@ -229,7 +224,7 @@ function Canvas(props) {
 
     const mousedown = function(e) {
         let hovered = getHoveredText();
-
+        console.log(hovered);
         if(hovered) {
             dragging = hovered;
             dragDistance = {

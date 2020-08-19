@@ -12,7 +12,6 @@ class App extends React.Component {
                     flexDirection: "row",
                     alignItems: "center",
                     justifyContent: "center",
-                    backgroundColor: "silver",
                     width: "100%",
                     position: "fixed",
                     bottom: "0",
