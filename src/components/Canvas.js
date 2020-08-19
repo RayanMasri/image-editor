@@ -3,8 +3,95 @@ import {useDropzone} from 'react-dropzone';
 
 const fontsUrl = "https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyAeG8DyUge1HQLUH9MJqifW18gMzOkqErs";
 
+function requestClipboard(callback) {
+   navigator.clipboard.readText()
+    .then(text => {
+        console.log('Pasted content: ', text);
+        callback(text);
+    })
+    .catch(err => {
+        console.error('Failed to read clipboard contents: ', err);
+        callback(err);
+    });
+}
+
 function isObjEmpty(obj) {
     return obj ? Object.keys(obj).length === 0 && obj.constructor === Object : true
+}
+
+class Text {
+    constructor(x, y, ctx) {
+        this.x = x;
+        this.y = y;
+        this.ctx = ctx;
+        this.screenWidth = 512;
+        this.screenHeight = 512;
+        this.text = "";
+        this.selected = false;
+    }
+
+    lines() {
+        let lines = []        
+        let currentLine = 0;
+        
+        for(let i = 0; i < this.text.length; i++) {
+            let char = this.text[i];
+
+            if(lines[currentLine]) {
+                if(this.ctx.measureText(lines[currentLine]).width >= this.screenWidth - 30) {                
+                    currentLine++;                
+                }
+            }
+
+            lines[currentLine] = lines[currentLine] ? lines[currentLine] + char : char;
+        }
+
+        return lines
+    }
+
+    select() {
+        this.selected = true;
+    }
+
+    unselect() {
+        this.selected = false;
+    }
+
+    move(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    getCharHeight() {
+        return this.ctx.measureText("M").width;
+    }
+
+    getSize() {
+        let lines = this.lines();
+        console.log(lines);
+        return [Math.min(this.screenWidth - 30, this.ctx.measureText(this.text).width), this.getCharHeight() * lines.length];
+    }
+
+    render() {
+        this.ctx.font = "30px Arial";
+        this.ctx.fillStyle = "black";
+        let lines = this.lines();
+
+        for(let i in lines) {   
+            this.ctx.fillText(lines[i], this.x, this.y + this.getCharHeight() * i);
+        }
+        
+        if(this.selected) {
+            let [width, height] = this.getSize();
+            console.log([width, height]);
+            this.ctx.strokeRect(
+                this.x-2.5,
+                this.y-this.getCharHeight(),
+                (width > 0 ? width : 1) + 5,
+                (height > 0 ? height : this.getCharHeight()) + 5);
+        }
+        // this.ctx.fillText(this.text, this.x, this.y);
+    }
 }
 
 function Canvas(props) {
@@ -17,10 +104,8 @@ function Canvas(props) {
     // add shapes
 
     let frameCount = 0;
-    let textSpacing = 30;
-    let selectedSpacing = 5;
 
-    let dragging = [undefined, undefined];
+    let dragging = undefined;
     let dragDistance = undefined;
     let mouseX = undefined;
     let mouseY = undefined;
@@ -29,7 +114,7 @@ function Canvas(props) {
 
     let backgroundImage = {}
 
-    let textElements = [];
+    let texts = [];
     // Text Element Layout
     // { text, font, x, y, selected }
 
@@ -58,116 +143,64 @@ function Canvas(props) {
     }
 
     const addText = function() {
-        textElements.map((e) => {
-            e.selected = false;
+        texts.map((e) => {
+            e.unselect();
         });
-        textElements.push({
-            text: "",
-            font: "30px Arial",
-            x: canvas.current.width / 2,
-            y: isObjEmpty(backgroundImage) ? canvas.current.height / 2 : canvas.current.height / 2 - backgroundImage.height / 2,
-            selected: true
-        })
-        updateTextElements();
-    }
 
-    const getCharHeight = () => {
         let ctx = getContext();
-        return ctx.measureText("M").width;
+        let posX = canvas.current.width / 2;
+        let posY = isObjEmpty(backgroundImage) ? canvas.current.height / 2 : canvas.current.height / 2 - backgroundImage.height / 2;
+
+        let text = new Text(posX, posY, ctx);
+        text.select();
+        texts.push(text);
+
+        update();
     }
 
-    const getTextLines = function(text, canvas) {
-        let ctx = canvas.getContext('2d');
-        let lines = []        
-        let currentLine = 0;
-        
-        for(let i = 0; i < text.length; i++) {
-            let char = text[i];
-
-            if(lines[currentLine]) {
-                if(ctx.measureText(lines[currentLine]).width >= canvas.width - textSpacing) {                
-                    currentLine++;                
-                }
-            }
-
-            lines[currentLine] = lines[currentLine] ? lines[currentLine] + char : char;
-        }
-
-        return lines
-    }
-
-    const getTextSize = function(text) {
-        let ctx = getContext();
-        let lines = getTextLines(text, canvas.current)
-        return [Math.min(canvas.current.width - textSpacing, ctx.measureText(text).width), getCharHeight() * lines.length];
-    }
-
-    
-    const drawTextElement = function(e) {
-        let ctx = getContext();  
-        let lines = getTextLines(e.text, canvas.current);
-
-        ctx.font = e.font; 
-        
-        for(let i in lines) {
-            let line = lines[i];
-            ctx.fillStyle = "black"
-            ctx.fillText(line, e.x, e.y + getCharHeight() * i);
-        }
-        
-        let [txtWidth, txtHeight] = getTextSize(e.text);
-        if(e.selected) {
-            ctx.strokeRect(e.x-selectedSpacing/2, e.y-getCharHeight(), (txtWidth > 0 ? txtWidth : 1) + selectedSpacing, (txtHeight > 0 ? txtHeight : getCharHeight()) + selectedSpacing);
-        }
-
-    }
-
-    const updateTextElements = function() { 
+    const update = function() { 
         clearCanvas();
-        textElements.map((e) => {
-            drawTextElement(e);
+        texts.map((e) => {
+            e.render();
         })
         drawBackgroundImage();
         // console.log(`frame: ${frameCount}`);
         frameCount++;
     }
 
-    const selectTextElement = function(index) {
-        textElements.map((e) => {
-            e.selected = false;
+    const selectText = function(text) {
+        texts.map((e) => {
+            e.unselect();
         });
-        textElements[index].selected = true;
-        updateTextElements();
+        text.select();
+        update();
     }
 
-    const getHoveredText = function(e) {
-        let [mouseX, mouseY] = getMouseFromEvent(e);
-        for(let i = 0; i < textElements.length; i++) {
-            let textElement = textElements[i];
-            let [width, height] = getTextSize(textElement.text)
+    const getHoveredText = function() {
+        for(let text of texts) {            
+            console.log(text);
+            let [width, height] = text.getSize();
             let dist = {
-                x: textElement.x - mouseX,
-                y: textElement.y + (height - getCharHeight()) - mouseY,
+                x: text.x - mouseX,
+                y: text.y + (height - text.getCharHeight()) - mouseY,
             }
             if(dist.y >= 0 && dist.y <= height) {
                 if(dist.x <= 0 && dist.x >= -width) {
-                    if(textElement.selected || textElement.text) {
-                        return [textElement, i];
+                    if(text.selected || text.text) {
+                        return text
                     }
                 }
             }
         }
-        return [undefined, undefined];
     }
 
     const getSelectedText = function() {
-        for(let i = 0; i < textElements.length; i++) {
-            let textElement = textElements[i];
-            if(textElement.selected) {
-                return [textElement, i];
+        for(let text of texts) {
+            console.log(text.selected);
+            if(text.selected) {
+                return text;
             }
         }
-        return [undefined, undefined];
     }
 
     const drawBackgroundImage = function() {
@@ -183,25 +216,22 @@ function Canvas(props) {
         mouseX = mousePosX;
         mouseY = mousePosY;
 
-        let [hovered, index] = getHoveredText(event);
-        let [drag, dragIndex] = dragging;
+        let hovered = getHoveredText(event);
 
-        if(drag) {
-            textElements.map((e) => {e.selected = false});
+        if(dragging) {
+            texts.map((e) => {e.selected = false});
 
-            let [width, height] = getTextSize(drag);
-            textElements[dragIndex].x = mouseX - dragDistance.x;
-            textElements[dragIndex].y = mouseY - dragDistance.y;
+            dragging.move(mouseX - dragDistance.x, mouseY - dragDistance.y)            
 
-            updateTextElements();       
+            update();       
         }
     }
 
     const mousedown = function(e) {
-        let [hovered, index] = getHoveredText(e);
+        let hovered = getHoveredText();
 
         if(hovered) {
-            dragging = [hovered, index];
+            dragging = hovered;
             dragDistance = {
                 x: mouseX - hovered.x,
                 y: mouseY - hovered.y
@@ -210,41 +240,44 @@ function Canvas(props) {
     }
     
     const mouseup = function(e) {
-        let [hovered, index] = getHoveredText(e);
+        let hovered = getHoveredText(e);
         if(!hovered) {
-            console.log(textElements);
-            textElements.map((e) => {
-                e.selected = false;
+            texts.map((e) => {
+                e.unselect()
             });
-            updateTextElements();
+            update();
         } else {
-            selectTextElement(index);        
+            selectText(hovered);        
         }
-        dragging = [undefined, undefined];
+        dragging = undefined;
         dragDistance = undefined
     }
 
-    const dblclick = function(e) {
-    }
-
     const keydown = function(event) {
-        let [selected, index] = getSelectedText();
+        let selected = getSelectedText();
 
         if(selected) {
-            // if(event.keyCode == 17 && event.keyCode == 65) {
-            //     // Ctrl + A
-            // }
+            // Hotkeys
+            if(event.ctrlKey && event.keyCode == 86) {
+                // Ctrl + V
+                requestClipboard(function(result) {
+                    selected.text += result;
+                    update();
+                })
+                return;
+            }
+
             if(event.key.length == 1) {
-                textElements[index].text += event.key;
+                selected.text += event.key;
+                console.log(selected.text);
             } else {
                 if(event.keyCode == 8) {
-                    // backspace
-                    let text = textElements[index].text;
-                    textElements[index].text = text.substring(0, text.length - 1);
+                    selected.text = selected.text.substring(0, selected.text.length - 1);
                 }
             }
         }
-        updateTextElements();
+        
+        update();
     }
 
     useEffect(function() {
@@ -252,7 +285,6 @@ function Canvas(props) {
         document.body.addEventListener('mousedown', mousedown, true);
         document.body.addEventListener('mousemove', mousemove, true);
         document.body.addEventListener('keydown', keydown, true);
-        document.body.addEventListener('dblclick', dblclick, true);
         document.getElementById("add-text").addEventListener('mouseup', function() {
             addText();
         }, true);
@@ -271,7 +303,7 @@ function Canvas(props) {
                 x: canvas.current.width / 2 - this.width / 2,
                 y: canvas.current.height / 2 - this.height / 2
             }
-            updateTextElements();
+            update();
         }
         img.src = src;
     }, [])
