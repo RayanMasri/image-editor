@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import Canvas from './components/Canvas.js'
 import './App.css';
 
@@ -7,6 +7,26 @@ class App extends React.Component {
         return (
             <div id="App">
                 <Canvas></Canvas>
+                <div id="social-links" style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    height: "100%",
+                    width: "38px",
+                    backgroundColor: "silver",
+                    position: "fixed",
+                    top: "0",
+                    right: "0"
+                }}>
+                    <div id="github-div">
+                        <a id="github-link" href="https://github.com/RayanMasri/image-editor" target="_blank">
+                            <img style={{
+                                width: "32px",
+                                height: "32px"
+                            }} src={require("./assets/github-icon.png")}/>
+                        </a>
+                    </div>
+                </div>
             </div>
         )        
     }
