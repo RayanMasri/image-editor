@@ -9,14 +9,14 @@ class App extends React.Component {
                 <Canvas></Canvas>
                 <div id="social-links" style={{
                     display: "flex",
-                    flexDirection: "column",
+                    flexDirection: "row",
                     alignItems: "center",
-                    height: "100%",
-                    width: "38px",
+                    justifyContent: "center",
                     backgroundColor: "silver",
+                    width: "100%",
                     position: "fixed",
-                    top: "0",
-                    right: "0"
+                    bottom: "0",
+                    right: "0"                   
                 }}>
                     <div id="github-div">
                         <a id="github-link" href="https://github.com/RayanMasri/image-editor" target="_blank">
