@@ -30,12 +30,12 @@ img {
     height: 150px;
     display: block;
     margin: 0 auto;
-    opacity: 10151%;
+    opacity: 0.1;
     transition: 0.2s;
 }
 
 #upload-area > img:hover {
-    opacity: 100%;
+    opacity: 1.0;
 }
 
 #utility-container {
