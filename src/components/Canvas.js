@@ -189,52 +189,52 @@ class Text extends Element {
     }
 }
 
-// class Text {
-//     constructor(x, y, placeholder, ctx) {
-//         this.x = x;
-//         this.y = y;
-//         this.ctx = ctx;
-//         this.text = "";
-//         this.placeholder = placeholder;
-//         this.realText = placeholder;
-//         this.selected = false;
-//     }
+class Picture extends Element {
+    constructor(src, ctx, update) {
+        super(NaN, NaN, ctx, update);
+        this.src = src;
+        this.img = undefined;
+    }
 
+    load(callback) {
+        let self = this;
+        if(!this.img) {
+            let img = new Image();
+            img.onload = function() {
+                self.img = img;
+                callback(this);
+            }
+            img.src = this.src;
+        } else {
+            callback(this.img);
+        }
+    }
 
-//     render() {
+    render() {
+        // Load & Draw Image
+        let self = this;
+        this.load(function(data) {
+            self.ctx.drawImage(self.img, 512 / 2 - data.width / 2, 512 / 2 - data.height / 2);
+        })
+    }
+}
 
-//     }
-// }
 
 function Canvas(props) {
     // References
     const canvas = React.useRef(null);
     const downloadButton = React.useRef(null);
-    const uploadButton = React.useRef(null);
     const addTextButton = React.useRef(null);
     
     let textButton = false;
 
     let ctx;
 
-    // let dragging;
-    // let dragDistance;
-    // let mouseX, mouseY;
-
     let elements = {
         text: [],
         image: []
     }
 
-
-    // Canvas Elements
-    // let backgroundImage = {}
-
-    // let texts = [];
-    
-    // Text Element Layout
-    // { text, font, x, y, selected }
-    
     const deleteCanvas = () => {
         window.location.reload(false); 
     }
@@ -245,16 +245,7 @@ function Canvas(props) {
         downloadButton.current.click();
         console.log(`Saved to URL: ${dataURL}`);
     }
-    
-    // const getContext = () => {
-    //     return canvas.current.getContext('2d');
-    // }
-    
-    
-    // const getMouseFromEvent = function(event) {
-    //     return [event.layerX, event.layerY]
-    // }
-    
+        
     const addText = function(x, y) {
         elements.text.map((text) => {
             text.unfocus();
@@ -263,36 +254,28 @@ function Canvas(props) {
         let text = new Text(x, y, ctx, update);
         elements.text.push(text);
 
-        // texts.map((e) => {
-        //     e.unselect();
-        // });
-        
-        // let ctx = getContext();
-        // let posX = canvas.current.width / 2;
-        // let posY = isObjEmpty(backgroundImage) ? canvas.current.height / 2 : canvas.current.height / 2 - backgroundImage.height / 2;
-        
-        // let text = new Text(posX, posY, "Text here", ctx);
-        // text.select();
-        // texts.push(text);
-        
         update();
     }
     
+    const addImage = function(src) {
+        let image = new Picture(src, ctx, update);
+        elements.image = [image];
+
+        // image.render();
+
+        update();
+    }
 
     const update = function() { 
+        // Clear canvas
         ctx.clearRect(0, 0, canvas.current.width, canvas.current.height);
         
         for(const [key, value] of Object.entries(elements)) {
+            console.log([key, value]);
             for(const element of value) {
                 element.render();
             }
         }
-        // elements.map((element) => {
-        //     element.
-        // })
-
-        // texts.map((e) => {e.render()});
-        // drawBackgroundImage();
     }
     
     // const selectText = function(text) {
@@ -455,10 +438,20 @@ function Canvas(props) {
             textButton = !textButton
             document.getElementById("add-text").style.backgroundColor = textButton ? "gainsboro" : "darkgray"
         }, true);
+
+        document.getElementById("upload-area").addEventListener('click', function(event) {
+            event.stopPropagation();
+        })
     }, [])
 
-    const onDrop = React.useCallback((files) => {        
-        // let file = files[0]
+    const onDrop = React.useCallback((files) => {  
+        // Draw Image
+        let file = files[0];
+        let src = URL.createObjectURL(file);
+
+        console.log("adding image");
+        addImage(src);
+
         // let ctx = getContext();        
         // let src = URL.createObjectURL(file);
         // let img = new Image();
@@ -481,7 +474,12 @@ function Canvas(props) {
         <div id="main-container">
             <div id="canvas-container">  
                 <canvas id="main-canvas" width="512" height="512" ref={canvas}/>
-                <div id="utility-bar">
+                <div id="upload-area" {...getRootProps()}>
+                        <input {...getInputProps()}/>
+                        <img src={require("../assets/upload-icon.png")}></img>  
+                </div> 
+            </div>
+            <div id="utility-container">
                     <button className="canvas-btn" onClick={deleteCanvas}>
                         <img style={{
                             width: "30px",
@@ -497,22 +495,7 @@ function Canvas(props) {
                             display: "none"
                         }} ref={downloadButton}/>
                     </button> 
-                    <div {...getRootProps()} style={{
-                            width: "50px",
-                            height: "50px",
-                            backgroundColor: "gray",
-                        }}>
-                        <input {...getInputProps()} ref={uploadButton}/>
-                        <img style={{
-                            width: "30px",
-                            height: "30px",
-                            display: "block",                        
-                            margin: "0 auto",
-                            paddingTop: "10px"
-                        }} src={require("../assets/upload-icon.png")}></img>  
-                    </div> 
-                </div>        
-            </div>
+            </div>        
             <div id="tools-container">
                 <button id='add-text' className="canvas-btn" ref={addTextButton}>
                     <img style={{
