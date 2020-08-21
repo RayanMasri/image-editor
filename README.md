@@ -1,4 +1,5 @@
-You can test the applicaiton [here](https://image-editor-rayan.netlify.app/)
+You can test the application [here](https://image-editor1.netlify.app/)
+(ignore the previous link)
 
 ## How to help
 You can view the canvas script [here](src/components/Canvas.js)<br />
