@@ -96,6 +96,17 @@ img {
     outline: 0;
 }
 
+#social-links {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    right: 0;                  
+}
+
 /* .canvas-button > img {
     width: 30px;
     height: 30px;

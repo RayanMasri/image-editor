@@ -202,7 +202,7 @@ class Picture extends Element {
         this.file = file;
         this.img = undefined;
 
-        this.bytesize = 0;
+        this.bytesize = NaN;
         this.size = {
             width: NaN,
             height: NaN
@@ -212,7 +212,7 @@ class Picture extends Element {
 
     seebytes(b) {
         let s = ['B', 'KB', 'MB', 'GB', 'TB'];
-        if (b == 0) return '0 B';
+        if (b == 0 || b == NaN) return '0B';
         let i = parseInt(Math.floor(Math.log(b) / Math.log(1024)));
         return Math.round(b / Math.pow(1024, i), 2) + s[i];
     }
