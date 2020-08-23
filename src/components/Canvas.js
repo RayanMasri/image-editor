@@ -1,6 +1,14 @@
 import React from 'react';
 import Dropzone from "./Dropzone.js";
 
+// unnecessary, made for sugar syntax
+Object.defineProperty(Array.prototype, 'first', {
+    value() {
+        return this.find(e => true);     // or this.find(Boolean)
+    }
+});
+
+
 // const fontsUrl = "https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyAeG8DyUge1HQLUH9MJqifW18gMzOkqErs";
 // const screenWidth = 512;
 // const screneHeight = 512;
@@ -286,6 +294,11 @@ class Canvas extends React.Component {
     
     save() {
         let url = this.canvas.current.toDataURL("image/png");
+        let image = this.elements.image.first();
+        let [name, extension] = [];
+        [name, extension] = image ? image.file.name.split('.') : [];
+
+        this.download.current.download = `${name ? name : "image"} (edited).${extension}`;
         this.download.current.href = url;
         this.download.current.click();
     }
@@ -368,8 +381,6 @@ class Canvas extends React.Component {
             this.active = active ? active.name : null;
         }
 
-        // this.props.app.properties.add(require("../assets/save-icon.png"));
-        // document.getElementById("properties-container").add();
         this.canvas.current.addEventListener('mouseup', (event) => {
             for(const [key, value] of Object.entries(this.elements)) {
                 for(const element of value) {
@@ -402,7 +413,6 @@ class Canvas extends React.Component {
             }
             this.keydown(event);
         }, true);
-
     }
 
     drop(files) {
@@ -426,7 +436,7 @@ class Canvas extends React.Component {
                             height: "30px"
                         }} src={require("../assets/delete-icon.png")}></img>   
                     </button> 
-                    <button className="canvas-btn" onClick={this.save}>
+                    <button className="canvas-btn" onClick={this.save.bind(this)}>
                         <img style={{
                             width: "30px",
                             height: "30px"
