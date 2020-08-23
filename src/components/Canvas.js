@@ -161,7 +161,7 @@ class Text extends Element {
 
     render() {
         this.ctx.fillStyle = "black"
-        this.ctx.font = "30px Arial";
+        this.ctx.font = "30px sans-serif";
         this.current = this.text ? this.text : this.placeholder;
 
         let lines = this.lines();
@@ -188,10 +188,42 @@ class Text extends Element {
 }
 
 class Picture extends Element {
-    constructor(src, ctx, update) {
+    constructor(src, file, ctx, update) {
         super(NaN, NaN, ctx, update);
         this.src = src;
+        this.file = file;
         this.img = undefined;
+
+        this.bytesize = 0;
+        this.size = {
+            width: NaN,
+            height: NaN
+        }
+        this.display = false;
+    }
+
+    seebytes(b) {
+        let s = ['B', 'KB', 'MB', 'GB', 'TB'];
+        if (b == 0) return '0 B';
+        let i = parseInt(Math.floor(Math.log(b) / Math.log(1024)));
+        return Math.round(b / Math.pow(1024, i), 2) + s[i];
+    }
+
+    isover() {
+        let {width, height} = this.size;
+        let dist = {
+            x: this.x - this.mouse.x,
+            y: this.y + (height) - this.mouse.y,
+        }
+        return (dist.y >= 0 && dist.y <= height) && (dist.x <= 0 && dist.x >= -width);
+    }
+
+    mousemove(event) {
+        this.see(event);
+        if(this.img) {
+            this.display = this.isover();
+            this.update();
+        }
     }
 
     load(callback) {
@@ -199,7 +231,16 @@ class Picture extends Element {
         if(!this.img) {
             let img = new Image();
             img.onload = function() {
+                // Write data
                 self.img = img;
+                self.bytesize = self.file.size;
+                self.size = {
+                    width: this.width,
+                    height: this.height
+                }
+                self.x = 512 / 2 - this.width / 2;
+                self.y = 512 / 2 - this.height / 2;
+
                 callback(this);
             }
             img.src = this.src;
@@ -213,7 +254,13 @@ class Picture extends Element {
         let self = this;
         this.load(function(data) {
             self.ctx.globalCompositeOperation = 'destination-over';
-            self.ctx.drawImage(self.img, 512 / 2 - data.width / 2, 512 / 2 - data.height / 2);
+            self.ctx.drawImage(self.img, self.x, self.y);
+
+            if(self.display) {
+                self.ctx.fillStyle = "black";
+                self.ctx.font = "10px sans-serif";
+                self.ctx.fillText(`${self.seebytes(self.bytesize)} ${self.size.width}x${self.size.height}`, self.x, self.y);
+            }
         })
     }
 }
@@ -254,8 +301,8 @@ class Canvas extends React.Component {
         this.update();
     }
     
-    addImage(src) {
-        let image = new Picture(src, this.ctx, this.update);
+    addImage(src, file) {
+        let image = new Picture(src, file, this.ctx, this.update.bind(this));
         this.elements.image = [image];
 
         this.update();
@@ -303,13 +350,13 @@ class Canvas extends React.Component {
 
     keydown(event) {
         if(event.key.toLowerCase() == "t") {
-            for(let property of this.app.properties.properties) {
-                if(property.name == "text") {
-                    property.toggle();
+            if(!this.elements.text.some((text) => text.selected)) {
+                for(let property of this.app.properties.properties) {
+                    if(property.name == "text") {
+                        property.toggle();
+                    }
                 }
-            }
-            // textButton = !textButton;
-            // addTextButton.current.style.backgroundColor = textButton ? "gainsboro" : "darkgray"        
+            }      
         }
     }
 
@@ -361,7 +408,7 @@ class Canvas extends React.Component {
     drop(files) {
        for(let file of files) {
            let src = URL.createObjectURL(file);
-           this.addImage(src);
+           this.addImage(src, file);
        }
     }
   
