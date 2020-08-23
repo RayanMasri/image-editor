@@ -1,12 +1,19 @@
 import React from 'react';
 import Canvas from './components/Canvas.js'
+import Properties from './components/Properties.js'
 import './App.css';
 
 class App extends React.Component { 
+
+    componentDidMount() {
+        this.properties.add("text", require("./assets/text-icon.png"));
+    }
+
     render() {   
         return (
             <div id="App">
-                <Canvas></Canvas>
+                <Properties mainRef={ref => (this.properties = ref)} ></Properties>
+                <Canvas app={this}/>
                 <div id="social-links" style={{
                     display: "flex",
                     flexDirection: "row",

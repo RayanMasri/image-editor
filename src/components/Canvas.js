@@ -1,5 +1,5 @@
-import React, {useEffect} from 'react';
-import {useDropzone} from 'react-dropzone';
+import React from 'react';
+import Dropzone from "./Dropzone.js";
 
 // const fontsUrl = "https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyAeG8DyUge1HQLUH9MJqifW18gMzOkqErs";
 // const screenWidth = 512;
@@ -153,11 +153,9 @@ class Text extends Element {
 
     keydown(event) {
         if(this.selected) {
-            if(event.key.toLowerCase() != event.key.toUpperCase()) {
-                this.text += event.key;
-                this.current = this.text;
-                this.update();
-            }
+            this.text += event.key;
+            this.current = this.text;
+            this.update();
         }
     }
 
@@ -214,298 +212,186 @@ class Picture extends Element {
         // Load & Draw Image
         let self = this;
         this.load(function(data) {
+            self.ctx.globalCompositeOperation = 'destination-over';
             self.ctx.drawImage(self.img, 512 / 2 - data.width / 2, 512 / 2 - data.height / 2);
         })
     }
 }
 
+class Canvas extends React.Component {
+    constructor(props) {
+        super(props);
+        this.app = this.props.app;
+        this.canvas = React.createRef();
+        this.download = React.createRef();
 
-function Canvas(props) {
-    // References
-    const canvas = React.useRef(null);
-    const downloadButton = React.useRef(null);
-    const addTextButton = React.useRef(null);
-    
-    let textButton = false;
-
-    let ctx;
-
-    let elements = {
-        text: [],
-        image: []
+        this.active = null;
+        this.ctx = null;
+        this.elements = {
+            text: [],
+            image: []
+        }
     }
-
-    const deleteCanvas = () => {
+    
+    delete() {
         window.location.reload(false); 
     }
     
-    const saveCanvas = () => {
-        let dataURL = canvas.current.toDataURL("image/png");
-        downloadButton.current.href = dataURL;
-        downloadButton.current.click();
-        console.log(`Saved to URL: ${dataURL}`);
+    save() {
+        let url = this.canvas.current.toDataURL("image/png");
+        this.download.current.href = url;
+        this.download.current.click();
     }
         
-    const addText = function(x, y) {
-        elements.text.map((text) => {
+    addText(x, y) {
+        this.elements.text.map((text) => {
             text.unfocus();
         })
 
-        let text = new Text(x, y, ctx, update);
-        elements.text.push(text);
+        let text = new Text(x, y, this.ctx, this.update.bind(this));
+        this.elements.text.push(text);
 
-        update();
+        this.update();
     }
     
-    const addImage = function(src) {
-        let image = new Picture(src, ctx, update);
-        elements.image = [image];
+    addImage(src) {
+        let image = new Picture(src, this.ctx, this.update);
+        this.elements.image = [image];
 
-        // image.render();
-
-        update();
+        this.update();
     }
 
-    const update = function() { 
+    update() { 
         // Clear canvas
-        ctx.clearRect(0, 0, canvas.current.width, canvas.current.height);
+        this.ctx.clearRect(0, 0, this.canvas.current.width, this.canvas.current.height);
         
-        for(const [key, value] of Object.entries(elements)) {
-            console.log([key, value]);
+        for(const [key, value] of Object.entries(this.elements)) {
             for(const element of value) {
                 element.render();
             }
         }
     }
-    
-    // const selectText = function(text) {
-    //     texts.map((e) => {
-    //         e.unselect();
-    //     });
-    //     text.select();
-    //     update();
-    // }
-    
-    // const getHoveredText = function() {
-    //     for(let text of texts) {            
-    //         if(text.isHovered(mouseX, mouseY)) {
-    //             return text;
-    //         }
-    //     }
-    // }
 
-    // const getSelectedText = function() {
-    //     for(let text of texts) {
-    //         if(text.selected) {
-    //             return text;
-    //         }
-    //     }
-    // }
+    mouseup(event) {
 
-    // const drawBackgroundImage = function() {
-    //     if(!isObjEmpty(backgroundImage)) {
-    //         let ctx = getContext();
-    //         ctx.globalCompositeOperation = 'destination-over';
-    //         ctx.drawImage(backgroundImage.image, backgroundImage.x, backgroundImage.y);
-    //     }  
-    // }
+    }
 
-    // const mousemove = function(event) {
-    //     let [mousePosX, mousePosY] = getMouseFromEvent(event);
-    //     mouseX = mousePosX;
-    //     mouseY = mousePosY;
-        
-    //     if(dragging) {
-    //         texts.map((e) => {e.selected = false});
-            
-    //         dragging.move(mouseX - dragDistance.x, mouseY - dragDistance.y)            
-            
-    //         update();       
-    //     }
-    // }
-    
-    // const mousedown = function(e) {
-    //     let hovered = getHoveredText();
-    //     console.log(hovered);
-    //     if(hovered) {
-    //         dragging = hovered;
-    //         dragDistance = {
-    //             x: mouseX - hovered.x,
-    //             y: mouseY - hovered.y
-    //         }
-    //     }
-    // }
-    
-    // const mouseup = function(e) {
-    //     let hovered = getHoveredText(e);
-    //     if(!hovered) {
-    //         texts.map((e) => {
-    //             e.unselect()
-    //         });
-    //         update();
-    //     } else {
-    //         selectText(hovered);        
-    //     }
-    //     dragging = undefined;
-    //     dragDistance = undefined
-    // }
+    mousedown(event) {
+        if(this.active) {
+            if(this.active == "text") {
+                // Check if mouse is over another text element
+                let isover = false;
+                for(let text of this.elements.text) {
+                    if(text.isover()) {
+                        isover = true;
+                        break;
+                    }
+                }
 
-    // const keydown = function(event) {
-    //     let selected = getSelectedText();
-
-    //     if(selected) {
-    //         // Hotkeys
-    //         if(event.ctrlKey && event.keyCode == 86) {
-    //             // Ctrl + V
-    //             requestClipboard(function(result) {
-    //                 selected.text += result;
-    //                 update();
-    //             })
-    //             return;
-    //         }
-
-    //         if(event.key.length == 1) {
-    //             selected.text += event.key;
-    //             console.log(selected.text);
-    //         } else {
-    //             if(event.keyCode == 8) {
-    //                 selected.text = selected.text.substring(0, selected.text.length - 1);
-    //             }
-    //         }
-    //     }
-        
-    //     update();
-    // }
-
-    const mouseup = (event) => {
-        if(textButton) {
-            addText(event.layerX, event.layerY);
-            textButton = false;
-            addTextButton.current.style.backgroundColor = textButton ? "gainsboro" : "darkgray"
+                // If not then draw
+                if(!isover) {
+                    this.addText(event.layerX, event.layerY);
+                    this.app.properties.disable();
+                }
+            }
         }
     }
-    const mousedown = (event) => {
+
+    mousemove(event) {
 
     }
-    const mousemove = (event) => {
 
-    }
-    const keydown = (event) => {
+    keydown(event) {
         if(event.key.toLowerCase() == "t") {
-            textButton = !textButton;
-            addTextButton.current.style.backgroundColor = textButton ? "gainsboro" : "darkgray"        
+            for(let property of this.app.properties.properties) {
+                if(property.name == "text") {
+                    property.toggle();
+                }
+            }
+            // textButton = !textButton;
+            // addTextButton.current.style.backgroundColor = textButton ? "gainsboro" : "darkgray"        
         }
     }
 
-    useEffect(function() {
-        ctx = canvas.current.getContext('2d');
-        document.body.addEventListener('mouseup', (event) => {
-            for(const [key, value] of Object.entries(elements)) {
+    componentDidMount() {
+        this.ctx = this.canvas.current.getContext('2d');
+
+        this.app.properties.onchange = () => {
+            let active = this.app.properties.active();
+            this.active = active ? active.name : null;
+        }
+
+        // this.props.app.properties.add(require("../assets/save-icon.png"));
+        // document.getElementById("properties-container").add();
+        this.canvas.current.addEventListener('mouseup', (event) => {
+            for(const [key, value] of Object.entries(this.elements)) {
                 for(const element of value) {
                     element.mouseup(event);
                 }
             }
-            mouseup(event);
+            this.mouseup(event);
         }, true);
-        document.body.addEventListener('mousedown', (event) => {
-            for(const [key, value] of Object.entries(elements)) {
+        this.canvas.current.addEventListener('mousedown', (event) => {
+            for(const [key, value] of Object.entries(this.elements)) {
                 for(const element of value) {
                     element.mousedown(event);
                 }
             }
-            mousedown(event);
+            this.mousedown(event);
         }, true);
-        document.body.addEventListener('mousemove', (event) => {
-            for(const [key, value] of Object.entries(elements)) {
+        this.canvas.current.addEventListener('mousemove', (event) => {
+            for(const [key, value] of Object.entries(this.elements)) {
                 for(const element of value) {
                     element.mousemove(event);
                 }
             }
-            mousemove(event);
+            this.mousemove(event);
         }, true);
         document.body.addEventListener('keydown', (event) => {
-            for(const [key, value] of Object.entries(elements)) {
+            for(const [key, value] of Object.entries(this.elements)) {
                 for(const element of value) {
                     element.keydown(event);
                 }
             }
-            keydown(event);
+            this.keydown(event);
         }, true);
 
+    }
 
-
-        document.getElementById("add-text").addEventListener('mouseup', function() {
-            textButton = !textButton
-            document.getElementById("add-text").style.backgroundColor = textButton ? "gainsboro" : "darkgray"
-        }, true);
-
-        document.getElementById("upload-area").addEventListener('click', function(event) {
-            event.stopPropagation();
-        })
-    }, [])
-
-    const onDrop = React.useCallback((files) => {  
-        // Draw Image
-        let file = files[0];
-        let src = URL.createObjectURL(file);
-
-        console.log("adding image");
-        addImage(src);
-
-        // let ctx = getContext();        
-        // let src = URL.createObjectURL(file);
-        // let img = new Image();
-        // img.onload = function() {
-        //     backgroundImage = {
-        //         image: img,
-        //         width: this.width,
-        //         height: this.height,
-        //         x: canvas.current.width / 2 - this.width / 2,
-        //         y: canvas.current.height / 2 - this.height / 2
-        //     }
-        //     update();
-        // }
-        // img.src = src;
-    }, [])
-
-    const {getRootProps, getInputProps} = useDropzone({onDrop})
-
-    return (
-        <div id="main-container">
-            <div id="canvas-container">  
-                <canvas id="main-canvas" width="512" height="512" ref={canvas}/>
-                <div id="upload-area" {...getRootProps()}>
-                        <input {...getInputProps()}/>
-                        <img src={require("../assets/upload-icon.png")}></img>  
-                </div> 
-            </div>
-            <div id="utility-container">
-                    <button className="canvas-btn" onClick={deleteCanvas}>
+    drop(files) {
+       for(let file of files) {
+           let src = URL.createObjectURL(file);
+           this.addImage(src);
+       }
+    }
+  
+    render() {
+        return (
+            <div id="main-container">
+                <div id="canvas-container">  
+                    <canvas id="main-canvas" width="512" height="512" ref={this.canvas}/>
+                    <Dropzone drop={this.drop} main={this}></Dropzone>
+                </div>
+                <div id="utility-container">
+                    <button className="canvas-btn" onClick={this.delete}>
                         <img style={{
                             width: "30px",
                             height: "30px"
                         }} src={require("../assets/delete-icon.png")}></img>   
                     </button> 
-                    <button className="canvas-btn" onClick={saveCanvas}>
+                    <button className="canvas-btn" onClick={this.save}>
                         <img style={{
                             width: "30px",
                             height: "30px"
                         }} src={require("../assets/save-icon.png")}></img>   
                         <a download="image.png" href="" style={{
                             display: "none"
-                        }} ref={downloadButton}/>
+                        }} ref={this.download}/>
                     </button> 
-            </div>        
-            <div id="tools-container">
-                <button id='add-text' className="canvas-btn" ref={addTextButton}>
-                    <img style={{
-                        width: "30px",
-                        height: "30px"
-                    }} src={require("../assets/text-icon.png")}></img>   
-                </button> 
+                </div>        
             </div>
-        </div>
-    )
+        )
+    }
 }
 
 export default Canvas;

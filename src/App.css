@@ -1,3 +1,40 @@
+/* Properties */
+
+:root {
+    --propbtn-normal: gray;
+    --propbtn-hover: gainsboro;
+}
+
+#properties-container > div {
+    background-color: silver;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: absolute;
+    height: 100%;
+    top: 0;
+    right: 0;
+}
+
+.property-icon {
+    width: 35px;
+    height: 35px;
+}
+
+.property-button {
+    background-color: var(--propbtn-normal);
+    width: 50px;
+    height: 50px;
+    border: 0;
+    outline: 0;
+}
+
+/* .property-button:hover {
+    background-color: var(--propbtn-hover);
+} */
+
+/* --- */
+
 img {
     -webkit-user-drag: none;
     -khtml-user-drag: none;
@@ -13,28 +50,26 @@ img {
     height: 512px;
 }
 
-
 #main-canvas {
     background-color: lightgray;
 }
 
-#upload-area {
-    position: fixed;
-    width: 150px;
-    height: 150px;
+.upload-area {
+    position: absolute;
+    width: 50px;
+    height: 50px;
     outline: 0;    
 }
 
-#upload-area > img {
-    width: 150px;
-    height: 150px;
+.upload-icon{
+    width: 50px;
+    height: 50px;
     display: block;
     margin: 0 auto;
     opacity: 0.1;
-    transition: 0.2s;
 }
 
-#upload-area > img:hover {
+.upload-icon:hover {
     opacity: 1.0;
 }
 
