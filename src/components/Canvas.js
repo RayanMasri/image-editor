@@ -356,7 +356,7 @@ class Canvas extends React.Component {
 
         let text = new Text(x, y, this);
         this.elements.text.push(text);
-        console.log(this.elements);
+
         this.update();
     }
     
@@ -383,26 +383,32 @@ class Canvas extends React.Component {
     }
 
     mousedown(event) {
-        if(this.active) {
-            if(this.active == "text") {
-                // Check if mouse is over another text element
-                let isover = false;
-                for(let text of this.elements.text) {
-                    if(text.isover()) {
-                        isover = true;
-                        break;
-                    }
-                }
-
-                // If not then draw
-                if(!isover) {
-                    let mouse = this.getmouse(event);
-
-                    this.addText(mouse.x, mouse.y);
-                    this.app.properties.disable();
+        if(this.active == "text") {
+            for(let text of this.elements.text) {
+                if(text.selected) {
+                    text.selected = false;
+                    this.update();
+                    return;
                 }
             }
+            
+            // Check if mouse is over another text element
+            let isover = false;
+            for(let text of this.elements.text) {
+                if(text.isover()) {
+                    isover = true;
+                    break;
+                }
+            }
+
+            // If not then draw
+            if(!isover) {
+                let mouse = this.getmouse(event);
+
+                this.addText(mouse.x, mouse.y);
+            }
         }
+        
     }
 
     mousemove(event) {
