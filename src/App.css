@@ -13,7 +13,7 @@
     position: absolute;
     height: 100%;
     top: 0;
-    right: 0;
+    right: 1;
 }
 
 .property-icon {
@@ -124,3 +124,7 @@ img {
     width: 30px;
     height: 30px;
 } */
+#template {
+    position: relative;
+    margin-left: 55px;
+}

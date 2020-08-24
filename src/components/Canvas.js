@@ -60,9 +60,10 @@ class Element {
     }
 
     getmouse(event) {
+        let rect = this.app.canvas.current.getBoundingClientRect();
         this.mouse = {
-            x: event.layerX,
-            y: event.layerY
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
         };
     }
 
@@ -155,7 +156,7 @@ class Text extends Element {
     
     mousedown(event) {
         this.getmouse(event);
-        if(this.isover()) {
+        if(this.isover()) {            
             this.drag = {
                 x: this.mouse.x - this.x,
                 y: this.mouse.y - this.y
@@ -302,10 +303,19 @@ class Canvas extends React.Component {
         this.ctx = null;
         this.elements = {
             text: [],
-            image: []
+            image: []   
         }
     }
     
+    getmouse(event) {
+        let rect = this.canvas.current.getBoundingClientRect();
+        let mouse = {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        };
+        return mouse;
+    }
+
     submitSize() {
         let width = Math.max(75, Math.min(1280, parseInt(this.widthInput.current.value)));
         let height = Math.max(75, Math.min(720, parseInt(this.heightInput.current.value)));
@@ -346,7 +356,7 @@ class Canvas extends React.Component {
 
         let text = new Text(x, y, this);
         this.elements.text.push(text);
-
+        console.log(this.elements);
         this.update();
     }
     
@@ -386,7 +396,9 @@ class Canvas extends React.Component {
 
                 // If not then draw
                 if(!isover) {
-                    this.addText(event.layerX, event.layerY);
+                    let mouse = this.getmouse(event);
+
+                    this.addText(mouse.x, mouse.y);
                     this.app.properties.disable();
                 }
             }
