@@ -307,8 +307,8 @@ class Canvas extends React.Component {
         let width = parseInt(this.widthInput.current.value);
         let height = parseInt(this.heightInput.current.value);
         
-        this.canvas.current.width = width;
-        this.canvas.current.height = height;
+        this.canvas.current.width = Math.min(1280, width);
+        this.canvas.current.height = Math.min(720, height);
         // console.log([width, height]);
     }
 
