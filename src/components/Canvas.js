@@ -31,34 +31,46 @@ Object.defineProperty(Array.prototype, 'first', {
 
 
 class Element {
-    constructor(x, y, ctx, update) {
+    constructor(x, y, app) {
         this.x = x;
         this.y = y;
-        this.ctx = ctx;
-        this.update = update;
+        this.app = app;
+        this.ctx = app.ctx;
+        this.update = app.update.bind(app);
+        this.screen = {
+            width: app.canvas.current.width,
+            height: app.canvas.current.height
+        }
     }
 
     mouseup(event) {
-        this.see(event);
+        this.getmouse(event);
     }
     
     mousedown(event) {
-        this.see(event);
+        this.getmouse(event);
     }
     
     mousemove(event) {
-        this.see(event);
+        this.getmouse(event);
     }
 
     keydown(event) {
 
     }
 
-    see(event) {
+    getmouse(event) {
         this.mouse = {
             x: event.layerX,
             y: event.layerY
         };
+    }
+
+    getscreen() {
+        this.screen = {
+            width: this.app.canvas.current.width,
+            height: this.app.canvas.current.height
+        }
     }
 
     render() {
@@ -67,8 +79,8 @@ class Element {
 }
 
 class Text extends Element {
-    constructor(x, y, ctx, update) {
-        super(x, y, ctx, update);
+    constructor(x, y, app) {
+        super(x, y, app);
 
         this.selected = true;
         this.text = "";
@@ -91,6 +103,7 @@ class Text extends Element {
     }
 
     lines() {
+        this.getscreen();
         let lines = []        
         let currentLine = 0;
 
@@ -98,7 +111,7 @@ class Text extends Element {
             let char = this.current[i];
 
             if(lines[currentLine]) {
-                if(this.ctx.measureText(lines[currentLine]).width >= 512 - 30) {                
+                if(this.ctx.measureText(lines[currentLine]).width >= this.screen.width - 30) {                
                     currentLine++;                
                 }
             }
@@ -130,7 +143,7 @@ class Text extends Element {
     }
 
     mouseup(event) {
-        this.see(event);
+        this.getmouse(event);
         if(this.isover()) {
             this.focus();
         } else {
@@ -141,7 +154,7 @@ class Text extends Element {
     }
     
     mousedown(event) {
-        this.see(event);
+        this.getmouse(event);
         if(this.isover()) {
             this.drag = {
                 x: this.mouse.x - this.x,
@@ -151,7 +164,7 @@ class Text extends Element {
     }
     
     mousemove(event) {
-        this.see(event);
+        this.getmouse(event);
         if(this.isdrag()) {
             this.x = this.mouse.x - this.drag.x;
             this.y = this.mouse.y - this.drag.y;
@@ -196,8 +209,8 @@ class Text extends Element {
 }
 
 class Picture extends Element {
-    constructor(src, file, ctx, update) {
-        super(NaN, NaN, ctx, update);
+    constructor(src, file, app) {
+        super(NaN, NaN, app);
         this.src = src;
         this.file = file;
         this.img = undefined;
@@ -210,7 +223,7 @@ class Picture extends Element {
         this.display = false;
     }
 
-    seebytes(b) {
+    getbytes(b) {
         let s = ['B', 'KB', 'MB', 'GB', 'TB'];
         if (b == 0 || b == NaN) return '0B';
         let i = parseInt(Math.floor(Math.log(b) / Math.log(1024)));
@@ -227,7 +240,7 @@ class Picture extends Element {
     }
 
     mousemove(event) {
-        this.see(event);
+        this.getmouse(event);
         if(this.img) {
             this.display = this.isover();
             this.update();
@@ -240,14 +253,15 @@ class Picture extends Element {
             let img = new Image();
             img.onload = function() {
                 // Write data
+                self.getscreen();
                 self.img = img;
                 self.bytesize = self.file.size;
                 self.size = {
                     width: this.width,
                     height: this.height
                 }
-                self.x = 512 / 2 - this.width / 2;
-                self.y = 512 / 2 - this.height / 2;
+                self.x = self.screen.width / 2 - this.width / 2;
+                self.y = self.screen.height / 2 - this.height / 2;
 
                 callback(this);
             }
@@ -267,7 +281,7 @@ class Picture extends Element {
             if(self.display) {
                 self.ctx.fillStyle = "black";
                 self.ctx.font = "10px sans-serif";
-                self.ctx.fillText(`${self.seebytes(self.bytesize)} ${self.size.width}x${self.size.height}`, self.x, self.y);
+                self.ctx.fillText(`${self.getbytes(self.bytesize)} ${self.size.width}x${self.size.height}`, self.x, self.y);
             }
         })
     }
@@ -278,7 +292,8 @@ class Canvas extends React.Component {
         super(props);
         this.app = this.props.app;
         this.canvas = React.createRef();
-        this.download = React.createRef();
+        this.widthInput = React.createRef();
+        this.heightInput = React.createRef();
 
         this.active = null;
         this.ctx = null;
@@ -288,19 +303,33 @@ class Canvas extends React.Component {
         }
     }
     
+    submitSize() {
+        let width = parseInt(this.widthInput.current.value);
+        let height = parseInt(this.heightInput.current.value);
+        
+        this.canvas.current.width = width;
+        this.canvas.current.height = height;
+        // console.log([width, height]);
+    }
+
     delete() {
-        window.location.reload(false); 
+        this.elements = {
+            text: [],
+            image: []
+        }
+        this.update();
     }
     
     save() {
         let url = this.canvas.current.toDataURL("image/png");
         let image = this.elements.image.first();
-        let [name, extension] = [];
-        [name, extension] = image ? image.file.name.split('.') : [];
+        let [name, _] = [];
+        [name, _] = image ? image.file.name.split('.') : [];
 
-        this.download.current.download = `${name ? name : "image"} (edited).${extension}`;
-        this.download.current.href = url;
-        this.download.current.click();
+        let link = document.createElement("a");
+        link.download = `${name ? name : "image"} (edited).png`
+        link.href = url;
+        link.click();
     }
         
     addText(x, y) {
@@ -308,14 +337,14 @@ class Canvas extends React.Component {
             text.unfocus();
         })
 
-        let text = new Text(x, y, this.ctx, this.update.bind(this));
+        let text = new Text(x, y, this);
         this.elements.text.push(text);
 
         this.update();
     }
     
     addImage(src, file) {
-        let image = new Picture(src, file, this.ctx, this.update.bind(this));
+        let image = new Picture(src, file, this);
         this.elements.image = [image];
 
         this.update();
@@ -430,7 +459,7 @@ class Canvas extends React.Component {
                     <Dropzone drop={this.drop} main={this}></Dropzone>
                 </div>
                 <div id="utility-container">
-                    <button className="canvas-btn" onClick={this.delete}>
+                    <button className="canvas-btn" onClick={this.delete.bind(this)}>
                         <img style={{
                             width: "30px",
                             height: "30px"
@@ -446,6 +475,13 @@ class Canvas extends React.Component {
                         }} ref={this.download}/>
                     </button> 
                 </div>        
+                <div id="template">
+                    <input type="number" name="width" max="1920" ref={this.widthInput}/>
+                    <label for="width">Width</label>
+                    <input type="number" name="height" max="1080" ref={this.heightInput}/>
+                    <label for="height">Height</label>
+                    <button onClick={this.submitSize.bind(this)}>Submit</button>
+                </div>
             </div>
         )
     }
