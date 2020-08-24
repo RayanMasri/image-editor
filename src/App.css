@@ -50,14 +50,27 @@ img {
 
 #canvas-container {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    width: 512px;
-    height: 512px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);        
+}
+
+#utility-container {
+    
+}
+
+#dropzone-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #main-canvas {
-    background-color: lightgray;
+    background-color: lightgray; 
 }
 
 .upload-area {

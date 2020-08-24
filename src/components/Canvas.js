@@ -260,8 +260,6 @@ class Picture extends Element {
                     width: this.width,
                     height: this.height
                 }
-                self.x = self.screen.width / 2 - this.width / 2;
-                self.y = self.screen.height / 2 - this.height / 2;
 
                 callback(this);
             }
@@ -275,6 +273,10 @@ class Picture extends Element {
         // Load & Draw Image
         let self = this;
         this.load(function(data) {
+            self.getscreen();  
+            self.x = self.screen.width / 2 - self.size.width / 2;
+            self.y = self.screen.height / 2 - self.size.height / 2;
+
             self.ctx.globalCompositeOperation = 'destination-over';
             self.ctx.drawImage(self.img, self.x, self.y);
 
@@ -294,6 +296,7 @@ class Canvas extends React.Component {
         this.canvas = React.createRef();
         this.widthInput = React.createRef();
         this.heightInput = React.createRef();
+        this.canvasContainer = React.createRef();
 
         this.active = null;
         this.ctx = null;
@@ -304,12 +307,16 @@ class Canvas extends React.Component {
     }
     
     submitSize() {
-        let width = parseInt(this.widthInput.current.value);
-        let height = parseInt(this.heightInput.current.value);
+        let width = Math.max(75, Math.min(1280, parseInt(this.widthInput.current.value)));
+        let height = Math.max(75, Math.min(720, parseInt(this.heightInput.current.value)));
         
-        this.canvas.current.width = Math.min(1280, width);
-        this.canvas.current.height = Math.min(720, height);
+        this.canvas.current.width = width;
+        this.canvas.current.height = height;
+
+        this.canvasContainer.current.width = width;
+        this.canvasContainer.current.height = height;
         // console.log([width, height]);
+        this.update();
     }
 
     delete() {
@@ -454,18 +461,19 @@ class Canvas extends React.Component {
     render() {
         return (
             <div id="main-container">
-                <div id="canvas-container">  
-                    <canvas id="main-canvas" width="512" height="512" ref={this.canvas}/>
-                    <Dropzone drop={this.drop} main={this}></Dropzone>
-                </div>
-                <div id="utility-container">
-                    <button className="canvas-btn" onClick={this.delete.bind(this)}>
-                        <img style={{
-                            width: "30px",
-                            height: "30px"
-                        }} src={require("../assets/delete-icon.png")}></img>   
-                    </button> 
-                    <button className="canvas-btn" onClick={this.save.bind(this)}>
+                <div id="canvas-container" ref={this.canvasContainer}>  
+                    <div id="dropzone-container">
+                        <canvas id="main-canvas" width="512" height="512" ref={this.canvas}/>
+                        <Dropzone drop={this.drop} main={this}></Dropzone>
+                    </div>                
+                    <div id="utility-container">
+                        <button className="canvas-btn" onClick={this.delete.bind(this)}>
+                            <img style={{
+                                width: "30px",
+                                height: "30px"
+                            }} src={require("../assets/delete-icon.png")}></img>   
+                        </button> 
+                        <button className="canvas-btn" onClick={this.save.bind(this)}>
                         <img style={{
                             width: "30px",
                             height: "30px"
@@ -474,7 +482,8 @@ class Canvas extends React.Component {
                             display: "none"
                         }} ref={this.download}/>
                     </button> 
-                </div>        
+                    </div>        
+                </div>
                 <div id="template">
                     <input type="number" name="width" max="1920" ref={this.widthInput}/>
                     <label for="width">Width</label>
