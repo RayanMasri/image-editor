@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-class Property {
+class Tool {
     constructor(name, def, selected, onchange, properties) {
         this.name = name;
         this.default = def; 
@@ -61,7 +61,7 @@ class Property {
     }
 }
 
-class Properties extends React.Component {
+class Tools extends React.Component {
     constructor() {
         super();
         this.properties = [];
@@ -79,7 +79,7 @@ class Properties extends React.Component {
     }
 
     add(name, icon, active) { 
-        let property = new Property(name, icon, active, this.onchange, this.properties);
+        let property = new Tool(name, icon, active, this.onchange, this.properties);
         this.properties.push(property);
 
         this.update();
@@ -124,4 +124,4 @@ class Properties extends React.Component {
     }
 }
 
-export default Properties;
+export default Tools;

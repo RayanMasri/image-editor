@@ -2,7 +2,7 @@ import React, {useCallback, useEffect} from 'react'
 import {useDropzone} from 'react-dropzone'
 
 function Dropzone(props) {
-    let input = React.useRef(null);
+    let area = React.useRef(null);
 
     const drop = (files) => {
         let func = props.drop.bind(props.main);
@@ -16,9 +16,14 @@ function Dropzone(props) {
     const {getRootProps, getInputProps} = useDropzone({onDrop})
 
     useEffect(() => {
-        input.current.addEventListener('click', function(event) {
-            event.stopPropogation();
-        })
+        // area.current.addEventListener('click', function(event) {
+        //     console.log(this.className);
+        //     // event.stopPropagation();
+        // })
+// 
+        // console.log(input.current
+        // input.current.addEven
+
 
         document.onpaste = (event) => {
             let items = (event.clipboardData || event.originalEvent.clipboardData).items;
@@ -32,8 +37,8 @@ function Dropzone(props) {
     }, [])
 
     return (
-        <div className="upload-area" {...getRootProps()}>
-            <input {...getInputProps()} ref={input}/>
+        <div className="upload-area" {...getRootProps()} ref={area}>
+            <input className="upload-input" {...getInputProps()}/>
             <img className="upload-icon" src={require("../assets/upload-icon.png")}></img>  
         </div> 
     )

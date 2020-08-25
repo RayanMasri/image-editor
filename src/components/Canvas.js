@@ -74,6 +74,10 @@ class Element {
         }
     }
 
+    save() {
+
+    }
+
     render() {
 
     }
@@ -181,6 +185,10 @@ class Text extends Element {
         }
     }
 
+    save() {
+        this.unfocus();
+    }
+
     render() {
         this.ctx.fillStyle = "black"
         this.ctx.font = "30px sans-serif";
@@ -270,6 +278,10 @@ class Picture extends Element {
         }
     }
 
+    save() {
+        this.display = false;
+    }
+
     render() {
         // Load & Draw Image
         let self = this;
@@ -306,6 +318,23 @@ class Canvas extends React.Component {
             image: []   
         }
     }
+
+    componentDidMount() {
+        this.ctx = this.canvas.current.getContext('2d');
+
+        this.app.tools.onchange = () => {
+            let active = this.app.tools.active();
+            this.active = active ? active.name : null;
+        }
+
+        const { mainRef } = this.props;
+        mainRef(this);
+    }   
+
+    componentWillUnmount() {
+        const { mainRef } = this.props;
+        mainRef(undefined);
+    }
     
     getmouse(event) {
         let rect = this.canvas.current.getBoundingClientRect();
@@ -338,6 +367,14 @@ class Canvas extends React.Component {
     }
     
     save() {
+        // Disable all highlights
+        for(const [key, value] of Object.entries(this.elements)) {
+            for(const element of value) {
+                element.save();
+            }
+        }
+        this.update();
+
         let url = this.canvas.current.toDataURL("image/png");
         let image = this.elements.image.first();
         let [name, _] = [];
@@ -379,10 +416,21 @@ class Canvas extends React.Component {
     }
 
     mouseup(event) {
+        for(const [key, value] of Object.entries(this.elements)) {
+            for(const element of value) {
+                element.mouseup(event);
+            }
+        }
 
     }
 
     mousedown(event) {
+        for(const [key, value] of Object.entries(this.elements)) {
+            for(const element of value) {
+                element.mousedown(event);
+            }
+        }
+
         if(this.active == "text") {
             for(let text of this.elements.text) {
                 if(text.selected) {
@@ -412,61 +460,29 @@ class Canvas extends React.Component {
     }
 
     mousemove(event) {
-
+        for(const [key, value] of Object.entries(this.elements)) {
+            for(const element of value) {
+                element.mousemove(event);
+            }
+        }
     }
 
     keydown(event) {
+        for(const [key, value] of Object.entries(this.elements)) {
+            for(const element of value) {
+                element.keydown(event);
+            }
+        }
+
         if(event.key.toLowerCase() == "t") {
             if(!this.elements.text.some((text) => text.selected)) {
-                for(let property of this.app.properties.properties) {
+                for(let property of this.app.tools.properties) {
                     if(property.name == "text") {
                         property.toggle();
                     }
                 }
             }      
         }
-    }
-
-    componentDidMount() {
-        this.ctx = this.canvas.current.getContext('2d');
-
-        this.app.properties.onchange = () => {
-            let active = this.app.properties.active();
-            this.active = active ? active.name : null;
-        }
-
-        this.canvas.current.addEventListener('mouseup', (event) => {
-            for(const [key, value] of Object.entries(this.elements)) {
-                for(const element of value) {
-                    element.mouseup(event);
-                }
-            }
-            this.mouseup(event);
-        }, true);
-        this.canvas.current.addEventListener('mousedown', (event) => {
-            for(const [key, value] of Object.entries(this.elements)) {
-                for(const element of value) {
-                    element.mousedown(event);
-                }
-            }
-            this.mousedown(event);
-        }, true);
-        this.canvas.current.addEventListener('mousemove', (event) => {
-            for(const [key, value] of Object.entries(this.elements)) {
-                for(const element of value) {
-                    element.mousemove(event);
-                }
-            }
-            this.mousemove(event);
-        }, true);
-        document.body.addEventListener('keydown', (event) => {
-            for(const [key, value] of Object.entries(this.elements)) {
-                for(const element of value) {
-                    element.keydown(event);
-                }
-            }
-            this.keydown(event);
-        }, true);
     }
 
     drop(files) {
