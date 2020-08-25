@@ -2,13 +2,16 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 class Property {
-    constructor(name, icon, onchange, properties) {
+    constructor(name, def, selected, onchange, properties) {
         this.name = name;
-        this.icon = icon;    
+        this.default = def; 
+        this.selected = selected;  
         this.properties = properties;
         this.onchange = onchange;
         this.active = false;
+
         this.button = React.createRef();
+        this.image = React.createRef();
     }
 
     disableOthers() {
@@ -42,14 +45,16 @@ class Property {
     }
 
     draw() {
-        this.button.current.style.backgroundColor = this.active ? "lightgray" : "gray";
+        if(this.image.current) {
+            this.image.current.src = this.active ? this.selected : this.default;
+        }
     }
 
     render() {
         return (
             <div className="property-container">
                 <button ref={this.button} className="property-button" onClick={this.toggle.bind(this)}>
-                    <img className="property-icon" src={this.icon}/>
+                    <img ref={this.image} className="property-icon" src={this.default}/>
                 </button>
             </div>
         )
@@ -73,8 +78,8 @@ class Properties extends React.Component {
         mainRef(undefined);
     }
 
-    add(name, icon) { 
-        let property = new Property(name, icon, this.onchange, this.properties);
+    add(name, icon, active) { 
+        let property = new Property(name, icon, active, this.onchange, this.properties);
         this.properties.push(property);
 
         this.update();
@@ -85,6 +90,7 @@ class Properties extends React.Component {
 
         for(let property of this.properties) {
             let render = property.render();
+            property.draw();
             // console.log(render);
             elements.push(render);
         }

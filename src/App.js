@@ -5,7 +5,11 @@ import './App.css';
 
 class App extends React.Component { 
     componentDidMount() {
-        this.properties.add("text", require("./assets/text-icon.png"));
+        this.properties.add(
+            "text",
+            require("./assets/text-icon-idle.png"),
+            require("./assets/text-icon-active.png")
+        );
     }
 
     render() {   
