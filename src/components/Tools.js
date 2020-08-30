@@ -52,9 +52,9 @@ class Tool {
 
     render() {
         return (
-            <div className="property-container">
-                <button ref={this.button} className="property-button" onClick={this.toggle.bind(this)}>
-                    <img ref={this.image} className="property-icon" src={this.default}/>
+            <div className="tool-container">
+                <button ref={this.button} className="tool-button" onClick={this.toggle.bind(this)}>
+                    <img ref={this.image} className="tool-icon" src={this.default}/>
                 </button>
             </div>
         )
@@ -99,7 +99,7 @@ class Tools extends React.Component {
             <div>
                 {elements}
             </div>,
-            document.getElementById("properties-container")
+            document.getElementById("tools-container")
         )
     }
 
@@ -120,7 +120,7 @@ class Tools extends React.Component {
     }
 
     render() {
-        return <div id="properties-container"/>         
+        return <div id="tools-container"/>         
     }
 }
 

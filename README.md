@@ -11,5 +11,5 @@ See the documentation about [creating pull requests](https://docs.github.com/en/
 ## Tasks
 * Add image data.
 * Add properties tab for Text.
-* Fix can't drag text behind dropzone
+* Fix can't interact with text behind dropzone
 * Fix slight offset to mouse in Text creation

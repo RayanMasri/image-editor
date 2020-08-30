@@ -1,6 +1,7 @@
 import React from 'react';
 import Canvas from './components/Canvas.js'
 import Tools from './components/Tools.js'
+import Properties from './components/Properties.js'
 import './App.css';
 
 class App extends React.Component { 
@@ -12,6 +13,30 @@ class App extends React.Component {
             require("./assets/text-icon-active.png")
         );
 
+        // Properties
+        // Load fonts
+        this.properties.add("menu", {
+            options: ["Arial", "Sans Serif"],
+            default: "Arial",
+            title: "Fonts"
+        }, (data) => {
+            console.log(data.option);
+        });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
         // Canvas events
         document.body.addEventListener('click', (event) => {
             if(["upload-input", "upload-icon"].includes(event.target.className)) {
@@ -51,6 +76,7 @@ class App extends React.Component {
         return (
             <div id="App">
                 <Tools mainRef={ref => (this.tools = ref)} ></Tools>
+                <Properties mainRef={ref => (this.properties = ref)}/>
                 <Canvas mainRef={ref => (this.canvas = ref)} app={this}/>
                 <div id="social-links">
                     <div id="github-div">

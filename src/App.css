@@ -11,10 +11,27 @@ img {
     user-select: none;
 }
 
+body {
+    background-color: #e4e4e4;
+}
+
+/* Property Components */
+
 /* Properties */
 
 #properties-container > div {
-    background-color: silver;
+    background-color: #f5f5f5;
+    position: absolute;
+    height: 100%;
+    width: 300px;
+    right: 0;
+    top: 0;
+}
+
+
+/* Tools */
+#tools-container > div {
+    background-color: #f5f5f5;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -25,27 +42,27 @@ img {
     right: 1;
 }
 
-.property-icon {
-    display: block;
-    width: 35px;
-    height: 35px;
-}
-
-.property-button {
-    background-color: silver;
+.tool-button {
+    background-color: #f5f5f5;
     width: 50px;
     height: 50px;
     border: 0;
     outline: 0;
 }
 
+.tool-icon {
+    display: block;
+    width: 35px;
+    height: 35px;
+}
+
+
+
 /* .property-button:hover {
     background-color: var(--propbtn-hover);
 } */
 
 /* --- */
-
-
 
 #canvas-container {
     display: flex;
@@ -68,9 +85,7 @@ img {
     align-items: center;
 }
 
-#main-canvas {
-    background-color: lightgray; 
-}
+
 
 .upload-area {
     position: absolute;
@@ -126,4 +141,5 @@ img {
 #template {
     position: relative;
     margin-left: 55px;
+    width: 50px;
 }

@@ -55,10 +55,6 @@ class Element {
         this.getmouse(event);
     }
 
-    keydown(event) {
-
-    }
-
     getmouse(event) {
         let rect = this.app.canvas.current.getBoundingClientRect();
         this.mouse = {
@@ -73,19 +69,11 @@ class Element {
             height: this.app.canvas.current.height
         }
     }
-
-    save() {
-
-    }
-
-    render() {
-
-    }
 }
 
 class Text extends Element {
-    constructor(x, y, app) {
-        super(x, y, app);
+    constructor() {
+        super();
 
         this.selected = true;
         this.text = "";
@@ -327,6 +315,8 @@ class Canvas extends React.Component {
             this.active = active ? active.name : null;
         }
 
+        this.update();
+
         const { mainRef } = this.props;
         mainRef(this);
     }   
@@ -400,19 +390,26 @@ class Canvas extends React.Component {
     addImage(src, file) {
         let image = new Picture(src, file, this);
         this.elements.image = [image];
-
+    
         this.update();
     }
 
     update() { 
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.current.width, this.canvas.current.height);
-        
+
+
         for(const [key, value] of Object.entries(this.elements)) {
             for(const element of value) {
                 element.render();
             }
         }
+
+        // Draw background
+        this.ctx.fillStyle = "white";
+
+        this.ctx.fillRect(0, 0, this.canvas.current.width, this.canvas.current.height);
+        
     }
 
     mouseup(event) {
@@ -498,7 +495,7 @@ class Canvas extends React.Component {
                 <div id="canvas-container" ref={this.canvasContainer}>  
                     <div id="dropzone-container">
                         <canvas id="main-canvas" width="512" height="512" ref={this.canvas}/>
-                        <Dropzone drop={this.drop} main={this}></Dropzone>
+                        <Dropzone drop={this.drop.bind(this)}></Dropzone>
                     </div>                
                     <div id="utility-container">
                         <button className="canvas-btn" onClick={this.delete.bind(this)}>
